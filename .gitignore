@@ -1,2 +1,7 @@
 .ipynb_checkpoints
-.pytest_cache
+.idea
+.venv
+.coverage
+htmlcov
+__pycache__
+tests/__pycache__

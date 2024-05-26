@@ -1,4 +1,4 @@
-from math import pi
+from math import pi, sqrt
 from functools import reduce
 from operator import add
 from common.r3 import R3
@@ -127,6 +127,8 @@ class Polyedr:
 
         # списки вершин, рёбер и граней полиэдра
         self.vertexes, self.edges, self.facets = [], [], []
+        self.res_sum = 0
+        self.c = 0
 
         # список строк файла
         with open(file) as f:
@@ -135,7 +137,7 @@ class Polyedr:
                     # обрабатываем первую строку; buf - вспомогательный массив
                     buf = line.split()
                     # коэффициент гомотетии
-                    c = float(buf.pop(0))
+                    self.c = float(buf.pop(0))
                     # углы Эйлера, определяющие вращение
                     alpha, beta, gamma = (float(x) * pi / 180.0 for x in buf)
                 elif i == 1:
@@ -145,7 +147,7 @@ class Polyedr:
                     # задание всех вершин полиэдра
                     x, y, z = (float(x) for x in line.split())
                     self.vertexes.append(R3(x, y, z).rz(
-                        alpha).ry(beta).rz(gamma) * c)
+                        alpha).ry(beta).rz(gamma) * self.c)
                 else:
                     # вспомогательный массив
                     buf = line.split()
@@ -167,3 +169,28 @@ class Polyedr:
                 e.shadow(f)
             for s in e.gaps:
                 tk.draw_line(e.r3(s.beg), e.r3(s.fin))
+
+    def is_good(self, t):
+        if -4 > t.z / self.c > -5 or -1 > t.z / self.c > -2:
+            return True
+
+    def area(self, i):
+        a = i.center()
+        sum_area = 0
+        for j in range(len(i.vertexes)):
+            b = i.vertexes[j-1]
+            c = i.vertexes[j]
+            sum_area += (sqrt((a - c).cross(a - b).dot((a-c).cross(a - b)))
+                         / 2 / self.c / self.c)
+        return sum_area
+
+    def task_65(self):
+        count = 0
+        for i in self.facets:
+            for j in i.vertexes:
+                if self.is_good(j):
+                    count += 1
+            if count <= 2:
+                self.res_sum += self.area(i)
+                count = 0
+        return self.res_sum
