@@ -127,6 +127,8 @@ class Polyedr:
 
         # списки вершин, рёбер и граней полиэдра
         self.vertexes, self.edges, self.facets = [], [], []
+        self.vertexes_unchanged, self.edges_unchanged = [], []
+        self.facets_unchanged = []
         self.res_sum = 0
         self.c = 0
 
@@ -148,6 +150,7 @@ class Polyedr:
                     x, y, z = (float(x) for x in line.split())
                     self.vertexes.append(R3(x, y, z).rz(
                         alpha).ry(beta).rz(gamma) * self.c)
+                    self.vertexes_unchanged.append((R3(x, y, z)))
                 else:
                     # вспомогательный массив
                     buf = line.split()
@@ -155,11 +158,17 @@ class Polyedr:
                     size = int(buf.pop(0))
                     # массив вершин этой грани
                     vertexes = list(self.vertexes[int(n) - 1] for n in buf)
+                    vertexes_unchanged = list(
+                        self.vertexes_unchanged[int(n) - 1] for n in buf)
                     # задание рёбер грани
                     for n in range(size):
                         self.edges.append(Edge(vertexes[n - 1], vertexes[n]))
+                    for n in range(size):
+                        self.edges_unchanged.append(Edge(
+                            vertexes_unchanged[n - 1], vertexes_unchanged[n]))
                     # задание самой грани
                     self.facets.append(Facet(vertexes))
+                    self.facets_unchanged.append(Facet(vertexes_unchanged))
 
     # Метод изображения полиэдра
     def draw(self, tk):  # pragma: no cover
@@ -171,7 +180,7 @@ class Polyedr:
                 tk.draw_line(e.r3(s.beg), e.r3(s.fin))
 
     def is_good(self, t):
-        if -4 > t.z / self.c > -5 or -1 > t.z / self.c > -2:
+        if -4 > t.z > -5 or -1 > t.z > -2:
             return True
 
     def area(self, i):
@@ -181,16 +190,16 @@ class Polyedr:
             b = i.vertexes[j-1]
             c = i.vertexes[j]
             sum_area += (sqrt((a - c).cross(a - b).dot((a-c).cross(a - b)))
-                         / 2 / self.c / self.c)
+                         / 2)
         return sum_area
 
     def task_65(self):
         count = 0
-        for i in self.facets:
+        for i in self.facets_unchanged:
             for j in i.vertexes:
                 if self.is_good(j):
                     count += 1
             if count <= 2:
                 self.res_sum += self.area(i)
-                count = 0
+            count = 0
         return self.res_sum
